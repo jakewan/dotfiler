@@ -17,6 +17,11 @@
 !README.md
 !LICENSE
 !Makefile
+!/.golangci.yml
+!/.goreleaser.yaml
+!/.github/workflows/release.yml
+!/.github/workflows/static-checks-go.yml
+!/.github/dependabot.yml
 
 # ...even if they are in subdirectories
 !*/
