@@ -19,6 +19,7 @@
 !Makefile
 !/.golangci.yml
 !/.github/workflows/static-checks-go.yml
+!/.github/dependabot.yml
 
 # ...even if they are in subdirectories
 !*/
