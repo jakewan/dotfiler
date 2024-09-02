@@ -183,10 +183,11 @@ func checkSymlinkDestination(
 	foundOS := slices.Contains(f.TargetOS, deps.GetOS())
 	foundArch := slices.Contains(f.TargetArch, deps.GetArch())
 	dest := filepath.Join(destRootDir, f.DstFilePath)
+	parentDirs := []string{}
 	if foundOS && foundArch {
 		if fi, err := os.Lstat(dest); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				fmt.Println("Creataing new symlink", dest)
+				fmt.Println("Creating new symlink", dest)
 			} else {
 				return fmt.Errorf("retrieving file info: %w", err)
 			}
@@ -195,6 +196,22 @@ func checkSymlinkDestination(
 		} else {
 			colorError.Printf("Existing destination file %s is not a symlink.\n", dest)
 			return ErrInternal
+		}
+
+		parentDir := filepath.Dir(dest)
+		if _, err := os.Stat(parentDir); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				if !slices.Contains(parentDirs, parentDir) {
+					parentDirs = append(parentDirs, parentDir)
+				}
+			} else {
+				return fmt.Errorf("retrieving info for parent directory of %s: %s", parentDir, err)
+			}
+		}
+	}
+	if len(parentDirs) > 0 {
+		for _, d := range parentDirs {
+			fmt.Println("Parent directory will be created:", d)
 		}
 	}
 	return nil
