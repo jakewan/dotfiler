@@ -100,6 +100,8 @@ Example dotfiler.yml:
 
 The values for `targetOS` and `targetArch` should match those indicated by Go's `GOOS` and `GOARCH` [runtime Constants](https://pkg.go.dev/runtime#pkg-constants).
 
+You can view a list of possible combinations by running `go tool dist list`.
+
 For example:
 
 ```shell
@@ -110,18 +112,10 @@ linux/386
 linux/amd64
 linux/arm
 linux/arm64
-linux/loong64
-linux/mips
-linux/mips64
-linux/mips64le
-linux/mipsle
-linux/ppc64
-linux/ppc64le
-linux/riscv64
-linux/s390x
+...
 ```
 
-Run the command to update dotfiles:
+Finally, run the command to update your system's dotfiles:
 
 ```shell
 dotfiler files update -m <path to dotfiler.yml>
