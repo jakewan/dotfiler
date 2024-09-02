@@ -11,6 +11,11 @@ import (
 	"github.com/jakewan/dotfiler/internal/cmd"
 )
 
+func init() {
+	// Omit date and time from log messages.
+	log.SetFlags(0)
+}
+
 type dependencies struct{}
 
 // GetSingleKey implements cmd.Dependencies.

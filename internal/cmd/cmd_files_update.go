@@ -106,12 +106,14 @@ func (c *cmdFilesUpdate) run(_ context.Context, deps Dependencies) error {
 				)
 				return ErrInternal
 			}
-			displayTargetFileOperation(
+			if err := displayTargetFileOperation(
 				deps,
 				cfg,
 				sourceDir,
 				c.destRootDir,
-			)
+			); err != nil {
+				return err
+			}
 		}
 		colorConfirmation.Println("Apply these operations? (y/n)")
 		if char, err := deps.GetSingleKey(); err != nil {
@@ -162,7 +164,7 @@ func displayTargetFileOperation(
 	f FileConfig,
 	srcDir string,
 	destRootDir string,
-) {
+) error {
 	foundOS := slices.Contains(f.TargetOS, deps.GetOS())
 	foundArch := slices.Contains(f.TargetArch, deps.GetArch())
 	if foundOS && foundArch {
@@ -172,7 +174,21 @@ func displayTargetFileOperation(
 		}
 		dest := filepath.Join(destRootDir, f.DstFilePath)
 		fmt.Printf("Creating symlink from %s to %s\n", src, dest)
+
+		// Check that the parent directory exists.
+		parentDir := filepath.Dir(dest)
+		if _, err := os.Stat(parentDir); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				colorWarning.Printf(
+					"Parent directory of %s does not exist. It will be created.\n",
+					dest,
+				)
+			} else {
+				return fmt.Errorf("checking parent directory info: %w", err)
+			}
+		}
 	}
+	return nil
 }
 
 func checkSymlinkDestination(
@@ -194,7 +210,10 @@ func checkSymlinkDestination(
 		} else if fi.Mode()&fs.ModeSymlink == fs.ModeSymlink {
 			fmt.Println("Recreating existing symlink", dest)
 		} else {
-			colorError.Printf("Existing destination file %s is not a symlink.\n", dest)
+			colorError.Printf(
+				"Existing destination file %s is not a symlink.\n",
+				dest,
+			)
 			return ErrInternal
 		}
 
@@ -205,13 +224,18 @@ func checkSymlinkDestination(
 					parentDirs = append(parentDirs, parentDir)
 				}
 			} else {
-				return fmt.Errorf("retrieving info for parent directory of %s: %s", parentDir, err)
+				return fmt.Errorf(
+					"retrieving info for parent directory of %s: %s",
+					dest,
+					err,
+				)
 			}
 		}
 	}
 	if len(parentDirs) > 0 {
+		slices.Sort(parentDirs)
 		for _, d := range parentDirs {
-			fmt.Println("Parent directory will be created:", d)
+			fmt.Println("Creating parent directory:", d)
 		}
 	}
 	return nil
@@ -241,6 +265,24 @@ func updateSymlink(
 		if removeFile {
 			if err := os.Remove(dest); err != nil {
 				return fmt.Errorf("removing existing file: %w", err)
+			}
+		}
+		parentDir := filepath.Dir(dest)
+		if _, err := os.Stat(parentDir); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				if err := os.MkdirAll(parentDir, 0750); err != nil {
+					return fmt.Errorf(
+						"creating parent directory of %s: %w",
+						dest,
+						err,
+					)
+				}
+			} else {
+				return fmt.Errorf(
+					"retrieving info for parent directory of %s: %s",
+					dest,
+					err,
+				)
 			}
 		}
 		if err := os.Symlink(src, dest); err != nil {
