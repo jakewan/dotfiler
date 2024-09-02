@@ -18,6 +18,7 @@
 !LICENSE
 !Makefile
 !/.golangci.yml
+!/.github/workflows/static-checks-go.yml
 
 # ...even if they are in subdirectories
 !*/
