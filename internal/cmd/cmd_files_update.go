@@ -95,6 +95,8 @@ func (c *cmdFilesUpdate) run(_ context.Context, deps Dependencies) error {
 		}
 		sourceDir := filepath.Dir(c.manifestFilePath)
 		expectedOps := []string{"symlink"}
+
+		// Display intended file operations for user confirmation.
 		for _, cfg := range manifestData {
 			if !slices.Contains(expectedOps, cfg.Op) {
 				colorError.Printf(
@@ -118,11 +120,34 @@ func (c *cmdFilesUpdate) run(_ context.Context, deps Dependencies) error {
 			colorWarning.Println("User cancelled")
 			return ErrInternal
 		}
+
+		// Check destinations.
 		for _, cfg := range manifestData {
 			switch op := cfg.Op; op {
 			case "symlink":
-				if err := updateSymlink(deps, cfg, sourceDir, c.destRootDir); err != nil {
-					return fmt.Errorf("updating symlink: %w", err)
+				if err := checkSymlinkDestination(
+					deps,
+					cfg,
+					c.destRootDir,
+				); err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("unexpected operation: %s", op)
+			}
+		}
+
+		// Process operations.
+		for _, cfg := range manifestData {
+			switch op := cfg.Op; op {
+			case "symlink":
+				if err := updateSymlink(
+					deps,
+					cfg,
+					sourceDir,
+					c.destRootDir,
+				); err != nil {
+					return err
 				}
 			default:
 				return fmt.Errorf("unexpected operation: %s", op)
@@ -150,6 +175,31 @@ func displayTargetFileOperation(
 	}
 }
 
+func checkSymlinkDestination(
+	deps Dependencies,
+	f FileConfig,
+	destRootDir string,
+) error {
+	foundOS := slices.Contains(f.TargetOS, deps.GetOS())
+	foundArch := slices.Contains(f.TargetArch, deps.GetArch())
+	dest := filepath.Join(destRootDir, f.DstFilePath)
+	if foundOS && foundArch {
+		if fi, err := os.Lstat(dest); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				fmt.Println("Creataing new symlink", dest)
+			} else {
+				return fmt.Errorf("retrieving file info: %w", err)
+			}
+		} else if fi.Mode()&fs.ModeSymlink == fs.ModeSymlink {
+			fmt.Println("Recreating existing symlink", dest)
+		} else {
+			colorError.Printf("Existing destination file %s is not a symlink.\n", dest)
+			return ErrInternal
+		}
+	}
+	return nil
+}
+
 func updateSymlink(
 	deps Dependencies,
 	f FileConfig,
@@ -158,11 +208,26 @@ func updateSymlink(
 ) error {
 	foundOS := slices.Contains(f.TargetOS, deps.GetOS())
 	foundArch := slices.Contains(f.TargetArch, deps.GetArch())
+	src := filepath.Join(srcDir, f.SrcFilePath)
+	dest := filepath.Join(destRootDir, f.DstFilePath)
+
+	// Check destination directories
 	if foundOS && foundArch {
-		src := filepath.Join(srcDir, f.SrcFilePath)
-		dest := filepath.Join(destRootDir, f.DstFilePath)
+		removeFile := true
+		if _, err := os.Lstat(dest); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				removeFile = false
+			} else {
+				return err
+			}
+		}
+		if removeFile {
+			if err := os.Remove(dest); err != nil {
+				return fmt.Errorf("removing existing file: %w", err)
+			}
+		}
 		if err := os.Symlink(src, dest); err != nil {
-			return err
+			return fmt.Errorf("creating symlink: %w", err)
 		}
 	}
 	return nil
