@@ -94,19 +94,22 @@ func (c *cmdFilesUpdate) run(_ context.Context, deps Dependencies) error {
 			return fmt.Errorf("deserializing manifest file: %w", err)
 		}
 		sourceDir := filepath.Dir(c.manifestFilePath)
+		expectedOps := []string{"symlink"}
 		for _, cfg := range manifestData {
-			if err := displayTargetFileOperation(
+			if !slices.Contains(expectedOps, cfg.Op) {
+				colorError.Printf(
+					"Unexpected file operation: %s (expected operations: %s)\n",
+					cfg.Op,
+					expectedOps,
+				)
+				return ErrInternal
+			}
+			displayTargetFileOperation(
 				deps,
 				cfg,
 				sourceDir,
 				c.destRootDir,
-			); err != nil {
-				colorError.Printf(
-					"An error occurred processing file configuration: %+v\n\nProcessing halted.\n",
-					cfg,
-				)
-				return ErrInternal
-			}
+			)
 		}
 		colorConfirmation.Println("Apply these operations? (y/n)")
 		if char, err := deps.GetSingleKey(); err != nil {
@@ -114,6 +117,16 @@ func (c *cmdFilesUpdate) run(_ context.Context, deps Dependencies) error {
 		} else if char != 'Y' && char != 'y' {
 			colorWarning.Println("User cancelled")
 			return ErrInternal
+		}
+		for _, cfg := range manifestData {
+			switch op := cfg.Op; op {
+			case "symlink":
+				if err := updateSymlink(deps, cfg, sourceDir, c.destRootDir); err != nil {
+					return fmt.Errorf("updating symlink: %w", err)
+				}
+			default:
+				return fmt.Errorf("unexpected operation: %s", op)
+			}
 		}
 	}
 	return nil
@@ -124,11 +137,33 @@ func displayTargetFileOperation(
 	f FileConfig,
 	srcDir string,
 	destRootDir string,
+) {
+	foundOS := slices.Contains(f.TargetOS, deps.GetOS())
+	foundArch := slices.Contains(f.TargetArch, deps.GetArch())
+	if foundOS && foundArch {
+		src := filepath.Join(srcDir, f.SrcFilePath)
+		if _, err := os.Stat(src); err != nil {
+			colorWarning.Println("Error retrieving file info:", err)
+		}
+		dest := filepath.Join(destRootDir, f.DstFilePath)
+		fmt.Printf("Creating symlink from %s to %s\n", src, dest)
+	}
+}
+
+func updateSymlink(
+	deps Dependencies,
+	f FileConfig,
+	srcDir string,
+	destRootDir string,
 ) error {
 	foundOS := slices.Contains(f.TargetOS, deps.GetOS())
 	foundArch := slices.Contains(f.TargetArch, deps.GetArch())
 	if foundOS && foundArch {
-		fmt.Printf("Processing %v\n", f)
+		src := filepath.Join(srcDir, f.SrcFilePath)
+		dest := filepath.Join(destRootDir, f.DstFilePath)
+		if err := os.Symlink(src, dest); err != nil {
+			return err
+		}
 	}
 	return nil
 }
