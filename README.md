@@ -4,6 +4,12 @@
 
 A tool for managing dotfiles.
 
+Install the tool globally:
+
+```shell
+go install github.com/jakewan/dotfiler@latest
+```
+
 Create a private Git repository containing source dotfiles and a `dotfiler.yml` manifest file.
 
 Example:
