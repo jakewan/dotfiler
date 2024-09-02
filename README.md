@@ -98,6 +98,29 @@ Example dotfiler.yml:
     - arm
 ```
 
+The values for `targetOS` and `targetArch` should match those returned by Go's `runtime.GOOS` and `runtime.GOARCH`.
+
+For example:
+
+```shell
+go tool dist list | egrep 'darwin|linux'
+darwin/amd64
+darwin/arm64
+linux/386
+linux/amd64
+linux/arm
+linux/arm64
+linux/loong64
+linux/mips
+linux/mips64
+linux/mips64le
+linux/mipsle
+linux/ppc64
+linux/ppc64le
+linux/riscv64
+linux/s390x
+```
+
 Run the command to update dotfiles:
 
 ```shell
