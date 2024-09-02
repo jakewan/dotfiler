@@ -1,5 +1,7 @@
 # dotfiler
 
+[![Static Checks - Go](https://github.com/jakewan/dotfiler/actions/workflows/static-checks-go.yml/badge.svg)](https://github.com/jakewan/dotfiler/actions/workflows/static-checks-go.yml)
+
 A tool for managing dotfiles.
 
 Create a private Git repository containing source dotfiles and a `dotfiler.yml` manifest file.
