@@ -98,7 +98,7 @@ Example dotfiler.yml:
     - arm
 ```
 
-The values for `targetOS` and `targetArch` should match those returned by Go's `runtime.GOOS` and `runtime.GOARCH`.
+The values for `targetOS` and `targetArch` should match those indicated by Go's `GOOS` and `GOARCH` [runtime Constants](https://pkg.go.dev/runtime#pkg-constants).
 
 For example:
 
