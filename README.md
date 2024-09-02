@@ -44,7 +44,7 @@ Example dotfiler.yml:
     - darwin
   targetArch:
     - amd64
-    - arm
+    - arm64
 - op: symlink
   srcFilePath: git/.gitconfig
   dstFilePath: .gitconfig
@@ -53,7 +53,7 @@ Example dotfiler.yml:
     - linux
   targetArch:
     - amd64
-    - arm
+    - arm64
 - op: symlink
   srcFilePath: git/.gitignore_global
   dstFilePath: .gitignore_global
@@ -62,7 +62,7 @@ Example dotfiler.yml:
     - linux
   targetArch:
     - amd64
-    - arm
+    - arm64
 - op: symlink
   srcFilePath: neovim/init.vim
   dstFilePath: .config/nvim/init.vim
@@ -71,7 +71,7 @@ Example dotfiler.yml:
     - linux
   targetArch:
     - amd64
-    - arm
+    - arm64
 - op: symlink
   srcFilePath: vscode/mac/settings.json
   dstFilePath: Library/Application Support/Code/User/settings.json
@@ -79,7 +79,7 @@ Example dotfiler.yml:
     - darwin
   targetArch:
     - amd64
-    - arm
+    - arm64
 - op: symlink
   srcFilePath: vscode/mac/keybindings.json
   dstFilePath: Library/Application Support/Code/User/keybindings.json
@@ -87,7 +87,7 @@ Example dotfiler.yml:
     - darwin
   targetArch:
     - amd64
-    - arm
+    - arm64
 - op: symlink
   srcFilePath: gnupg/mac/gpg-agent.conf
   dstFilePath: .gnupg/gpg-agent.conf
@@ -101,7 +101,7 @@ Example dotfiler.yml:
   targetOS:
     - darwin
   targetArch:
-    - arm
+    - arm64
 ```
 
 The values for `targetOS` and `targetArch` should match those indicated by Go's `GOOS` and `GOARCH` [runtime Constants](https://pkg.go.dev/runtime#pkg-constants).
