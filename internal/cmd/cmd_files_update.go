@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -51,9 +50,9 @@ func (c *cmdFilesUpdate) run(_ context.Context, deps Dependencies) error {
 	} else {
 		c.manifestFilePath = n
 	}
-	if !strings.HasSuffix(c.manifestFilePath, manifestFileName) {
+	if !slices.Contains([]string{".yml", ".yaml"}, filepath.Ext(c.manifestFilePath)) {
 		colorWarning.Println(
-			"The given manifest file path was not terminated with the manifest filename. We assume it is the containing directory.",
+			"The given manifest file path does not have a YAML extension. We assume it is a directory containing a dotfiler.yml file.",
 		)
 		c.manifestFilePath = filepath.Join(c.manifestFilePath, manifestFileName)
 	}
